@@ -48,7 +48,7 @@ module "alb" {
   source = "terraform-aws-modules/alb/aws"
 
   name    = "blog-alb"
-  vpc_id  = module.blog_vpc.id
+  vpc_id  = module.blog_vpc.vpc_id
   subnets = [module.blog_vpc.public_subnets]
   security_groups = module.blog_sg_mondule.security_group_id
  
