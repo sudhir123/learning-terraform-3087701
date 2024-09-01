@@ -18,7 +18,9 @@ resource "aws_instance" "blog" {
   ami           = data.aws_ami.app_ami.id
   instance_type = var.instance_type
 
-  vpc_security_group_ids = [aws_security_group.blog.id] 
+  vpc_security_group_ids = [module.blog_sg_mondule.security_group_id] 
+
+  subnet_id = module.blog_vpc.public_subnets[0]
 
   tags = {
     Name = "Learning Terraform"
@@ -26,6 +28,73 @@ resource "aws_instance" "blog" {
 }
 data "aws_vpc" "default"{
   default= true
+}
+
+module "blog_vpc" {
+  source = "terraform-aws-modules/vpc/aws"
+
+  name = "dev"
+  cidr = "10.0.0.0/16"
+
+  azs             = ["us-west-2a", "us-west-2b", "us-west-2c"]
+ 
+  tags = {
+    Terraform = "true"
+    Environment = "dev"
+  }
+}
+
+module "alb" {
+  source = "terraform-aws-modules/alb/aws"
+
+  name    = "blog-alb"
+  vpc_id  = module.blog_vpc.id
+  subnets = [module.blog_vpc.public_subnets]
+  security_groups = module.blog_sg_mondule.security_group_id
+ 
+
+  target_groups =[ {
+    
+      name_prefix      = "blog"
+      protocol         = "HTTP"
+      port             = 80
+      target_type      = "instance"
+      targets= {
+        my_taregt= {
+            target_id        = aws_instance.blog.id
+            port= 80
+        }
+      }
+        
+  }
+
+listeners = {
+    ex-http-https-redirect = {
+      port     = 80
+      protocol = "HTTP"
+      target_grou_index = 0
+    }
+    
+  }
+
+  tags = {
+    Environment = "Development"
+    Project     = "Example"
+  }
+}
+]
+
+module "blog_sg_mondule" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.2.0"
+  name = "blog_new"
+  vpc_id = module.blog_vpc.vpc_id
+
+  ingress_rule = ["http-80-tcp", "https-443-tcp"]
+  ingress_cidr_blocks = ["0.0.0.0/0"]
+
+  egress_rule = ["all-all"]
+  egress_cidr_blocks = ["0.0.0.0/0"]
 }
 
 resource "aws_security_group" "blog" {
