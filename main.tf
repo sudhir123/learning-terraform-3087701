@@ -65,24 +65,24 @@ module "alb" {
             port= 80
         }
       }
-        
-  }
-
-listeners = {
-    ex-http-https-redirect = {
-      port     = 80
-      protocol = "HTTP"
-      target_grou_index = 0
+      
     }
-    
-  }
+  ]
+  listeners = {
+      ex-http-https-redirect = {
+        port     = 80
+        protocol = "HTTP"
+        target_grou_index = 0
+      }
+      
+    }
 
   tags = {
     Environment = "Development"
     Project     = "Example"
   }
 }
-]
+
 
 module "blog_sg_mondule" {
   source  = "terraform-aws-modules/security-group/aws"
