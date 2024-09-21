@@ -26,6 +26,24 @@ resource "aws_instance" "blog" {
     Name = "Learning Terraform"
   }
 }
+
+module "autoscaling" {
+  source  = "terraform-aws-modules/autoscaling/aws"
+  version = "8.0.0"
+  # insert the 1 required variable here
+
+  name = "blog"
+  min_sivpze= 1 
+  max_size = 2
+  vpc_zone_identifier = module.blog_vpc.public_subnets
+  target_group_arns= module.blog_alb.target_group_arns
+  security_groups = [module.blog_sg_mondule.security_group_id] 
+  image_id           = data.aws_ami.app_ami.id
+  instance_type = var.instance_type
+
+  }
+
+
 data "aws_vpc" "default"{
   default= true
 }
@@ -46,7 +64,7 @@ module "blog_vpc" {
   }
 }
 
-module "alb" {
+module "blog_alb" {
   source = "terraform-aws-modules/alb/aws"
 
   name    = "blog-alb"
